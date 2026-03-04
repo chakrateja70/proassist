@@ -13,16 +13,20 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <main>
-          <h1>Proassist</h1>
-          <nav>
-            <Link href="/">Home</Link>
-            <Link href="/app">App</Link>
-            <Link href="/profile">Profile</Link>
-            <Link href="/history">History</Link>
-          </nav>
-          {children}
-        </main>
+        <div className="page-wrapper">
+          <header className="navbar">
+            <Link href="/" className="navbar-brand">
+              <span className="brand-dot" />
+              Proassist
+            </Link>
+            <nav className="navbar-links">
+              <Link href="/app">App</Link>
+              <Link href="/profile">Profile</Link>
+              <Link href="/history">History</Link>
+            </nav>
+          </header>
+          <div className="page-content">{children}</div>
+        </div>
       </body>
     </html>
   );
