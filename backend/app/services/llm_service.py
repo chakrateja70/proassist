@@ -49,55 +49,65 @@ async def generate_outreach(
 
 def _build_prompt(user: User, profile: Profile, resume: Resume, job: JobInput) -> str:
     return f"""
-You are writing highly personalized outreach for a job opportunity.
+You are helping a job seeker write a personalized interest email and LinkedIn message to a recruiter or hiring manager.
+The candidate is expressing genuine interest in the role below, referencing specific experience and skills from their resume that match the job description.
 Language: {job.language}
 
 Candidate:
 - Name: {user.name}
 - Email: {user.email}
 - Headline: {profile.headline or ""}
-- Experience years: {profile.years_experience or ""}
+- Years of experience: {profile.years_experience or ""}
 - Skills: {profile.skills or ""}
 - Summary: {profile.summary or ""}
 - LinkedIn: {profile.linkedin_url or ""}
 - GitHub: {profile.github_url or ""}
 
-Resume Text:
+Candidate's Resume:
 {resume.parsed_text[:5000]}
 
 Job Description:
 {job.jd_text[:7000]}
 
 Output JSON with:
-1) gmail_subject
-2) gmail_body
-3) linkedin_message
-4) personalization_rationale
+1) gmail_subject  — compelling subject line from the candidate, e.g. "Interested in [Role] at [Company] – [Candidate Name]"
+2) gmail_body     — email written in first person FROM the candidate TO the hiring team; open with why they are excited about this specific role/company, highlight 2-3 concrete resume achievements that directly map to the JD requirements, and close with a clear call-to-action (e.g. request a call)
+3) linkedin_message — short (under 300 chars) first-person note FROM the candidate expressing interest and one key matching qualification
+4) personalization_rationale — brief explanation of which resume points were matched to which JD requirements
 
 Requirements:
-- Tailor to role/company requirements
-- No fabricated claims
-- Clear CTA
-- Professional concise tone
+- Write entirely from the candidate's perspective (first person: I, my, I've)
+- Highlight specific overlaps between the resume and the job description
+- Do NOT invent achievements not present in the resume
+- Professional, enthusiastic, and concise tone
+- Clear call-to-action at the end of the email
 """
 
 
 def _fallback_generation(user: User, profile: Profile, job: JobInput) -> dict:
-    subject = f"Application Interest: {job.role_title or 'Open Role'}"
+    role = job.role_title or "this position"
+    company = f" at {job.company_name}" if job.company_name else ""
+    skills = profile.skills or "relevant technologies"
+    years = f"{profile.years_experience} years of" if profile.years_experience else "extensive"
+
+    subject = f"Interest in {role}{company} – {user.name}"
     body = (
-        f"Hi Hiring Team,\n\n"
-        f"My name is {user.name}, and I am interested in the {job.role_title or 'position'}"
-        f"{f' at {job.company_name}' if job.company_name else ''}. "
-        f"I bring {profile.years_experience or 'relevant'} years of experience and skills in "
-        f"{profile.skills or 'software development'}.\n\n"
-        "I have attached my resume for your review and would welcome a chance to discuss fit.\n\n"
-        "Best regards,\n"
-        f"{user.name}"
+        f"Hi,\n\n"
+        f"I hope this message finds you well. My name is {user.name}, and I am writing to express my strong interest "
+        f"in the {role}{company} role.\n\n"
+        f"With {years} experience and hands-on skills in {skills}, I believe my background aligns closely with "
+        f"what you are looking for. I am particularly excited about this opportunity because it matches the kind of "
+        f"work I have been doing and the direction I want to grow in.\n\n"
+        f"I have attached my resume for your review. I would love the chance to speak with you and learn more about "
+        f"the role — please let me know if you would be open to a quick call at your convenience.\n\n"
+        f"Thank you for your time and consideration.\n\n"
+        f"Best regards,\n"
+        f"{user.name}\n"
+        f"{user.email}"
     )
     linkedin = (
-        f"Hi, I came across the {job.role_title or 'role'}"
-        f"{f' at {job.company_name}' if job.company_name else ''} and wanted to connect. "
-        "I believe my profile aligns well and would appreciate the opportunity to discuss further."
+        f"Hi, I came across the {role}{company} and I'm very interested — "
+        f"my {years} experience in {skills} seems like a strong match. Would love to connect!"
     )
     return {
         "gmail_subject": subject,
